@@ -9,7 +9,8 @@ const PORT = 8080;
 mongoose.connect("mongodb+srv://piyushoa2004:oA7lIkVdhBDu4Tr0@main.bcfx7zx.mongodb.net/maindb?retryWrites=true&w=majority")
     .then(() => {
         console.log("succesffully connected")
-    }).catch((e) => {
+    })
+    .catch((e) => {
         console.log(e)
 
     });
@@ -17,12 +18,6 @@ mongoose.connect("mongodb+srv://piyushoa2004:oA7lIkVdhBDu4Tr0@main.bcfx7zx.mongo
 express.use(cors());
 express.use(json());
 
-express.get("/signin", (req, res, next) => {
-    res.send("response send successfully");
-})
-
 express.use(auth);
 
-express.listen(PORT, () => {
-
-});
+express.listen(PORT, () => {});
