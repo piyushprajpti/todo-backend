@@ -59,37 +59,16 @@ export const login = async (req, res, next) => {
 // reset password
 
 export const resetpassword = async (req, res, next) => {
-    const { email, otp, password, confirmPassword } = req.body;
+    const { email } = req.body;
 
     let result;
 
     try {
-        if (email.trim() === "") {
-            throw { message: "Email can't be empty." }
-        }
+        result = await User.findOne({email: email});
 
-        result = await User.findOne({ email: email });
-
-        if (email.indexOf("@") === -1 || result === null) {
-            throw { message: "Invalid email address" }
-        }
-        if (otp.trim() === "" || otp !== "123") {
-            throw { message: "Incorrect OTP. Please try again." }
-        }
-        if (password.trim() === "" || confirmPassword.trim() === "") {
-            throw { message: "Password can't be empty" }
-        }
-        if (password.length < 5) {
-            throw { message: "Weak password. Please choose a strong password." }
-        }
-        if (password !== confirmPassword) {
-            throw { message: "Password mismatch." }
-        }
-
-        await User.updateOne({ email: email }, { password: password });
-        res.send("Password reset successfull. Login to continue");
-
+        
     } catch (error) {
-        res.status(422).send(error.message);
+        
     }
+
 }
