@@ -1,4 +1,5 @@
 import User from "../schema/User.js";
+import Notes from "../schema/Notes.js";
 
 // signup
 export const signup = async (req, res, next) => {
@@ -28,7 +29,7 @@ export const signup = async (req, res, next) => {
         }
 
         result = await User.create({ name: name, email: email, password: password });
-        res.send("Account created successfully. Login to continue.");
+        res.send(result);
 
     } catch (error) {
         res.status(422).send(error.message);
@@ -50,7 +51,7 @@ export const login = async (req, res, next) => {
         if (result === null) {
             throw { message: "Invalid Credentials. Please try again." }
         }
-        res.send("Login successfull.");
+        res.send(result);
     } catch (error) {
         res.status(422).send(error.message);
     }
@@ -62,13 +63,35 @@ export const resetpassword = async (req, res, next) => {
     const { email } = req.body;
 
     let result;
-
+ 
     try {
-        result = await User.findOne({email: email});
+        if (email.trim() === "" || email.indexOf("@") === -1) {
+            throw { message: "Invalid email address" };
+        }
 
-        
+        result = await User.findOne({ email: email });
+
+        // const userid = result.data._id;
+
+        res.send(result.data)
     } catch (error) {
-        
+        res.status(422).send(error.message);
     }
 
+}
+
+// add note
+
+export const addnote = async (req, res, next) => {
+    const { userid, title, description } = req.body;
+
+    let result;
+
+    try {
+        result = await Notes.create({ userid: userid, title: title, description: description });
+
+        res.send(result);
+    } catch (error) {
+        res.status(422).send(error);
+    }
 }
