@@ -113,3 +113,18 @@ export const profilepage = async (req, res, next) => {
         res.status(400).send(error);
     }
 }
+
+// fetch notes 
+
+export const fetchnotes = async (req, res, next) => {
+    const {userid} = req.body;
+
+    let result;
+    try {
+        result = await Notes.find({userid: userid});
+
+        res.send(result);
+    } catch (error) {
+        res.status(400).send(error)
+    }
+}
