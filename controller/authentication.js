@@ -86,12 +86,17 @@ export const resetpassword = async (req, res, next) => {
 // 4. add note
 
 export const addnote = async (req, res, next) => {
-    const { userid, title, description } = req.body;
+    const { userid, noteid, title, description } = req.body;
 
     let result;
 
     try {
+        if (noteid) {
+            result = await Notes.updateOne({_id: noteid}, {title: title, description: description})
+        }
+        else {
         result = await Notes.create({ userid: userid, title: title, description: description });
+        }
 
         res.send(result);
     } catch (error) {
@@ -99,7 +104,22 @@ export const addnote = async (req, res, next) => {
     }
 }
 
-// 5. profile page
+// 5. delete note 
+
+export const deletenote = async (req, res, next) => {
+    const {noteid} = req.body;
+
+    let result;
+    try {
+        result = await Notes.deleteOne({_id: noteid});
+
+        res.send(result);
+    } catch (error) {
+        res.send(error);
+    }
+}
+
+// 6. profile page
 
 export const profilepage = async (req, res, next) => {
     const { userid } = req.body;
@@ -114,7 +134,7 @@ export const profilepage = async (req, res, next) => {
     }
 }
 
-// fetch notes 
+// 7. fetch notes 
 
 export const fetchnotes = async (req, res, next) => {
     const {userid} = req.body;
