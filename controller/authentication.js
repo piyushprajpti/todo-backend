@@ -1,7 +1,11 @@
 import User from "../schema/User.js";
 import Notes from "../schema/Notes.js";
+import Token from "../schema/Token.js";
+import nodeMailer from "nodemailer";
+import Handlebars from "handlebars";
 
 // 1. signup
+
 export const signup = async (req, res, next) => {
     const { name, email, password, confirmPassword } = req.body;
 
@@ -37,6 +41,7 @@ export const signup = async (req, res, next) => {
 }
 
 // 2. login
+
 export const login = async (req, res, next) => {
     const { email, password } = req.body;
 
@@ -62,26 +67,200 @@ export const login = async (req, res, next) => {
 export const resetpassword = async (req, res, next) => {
     const { email } = req.body;
 
-    let result;
-
     try {
         if (email.trim() === "" || email.indexOf("@") === -1) {
             throw { message: "Invalid email address" };
         }
 
-        result = await User.findOne({ email: email });
+        const result = await User.findOne({ email: email });
 
-        // const userid = result.data._id;
+        const token = "kdjgnkjegbsdkjngskjd";
+        const expireTime = 300;
 
-        res.json({
-            code: 1,
-            message: "SUCCESS"
-        })
+        if (result) {
+
+            const doc = await Token.findOneAndUpdate(
+                {
+                    email: result.email
+                },
+                {
+                    token: token
+                },
+                {
+                    upsert: true,
+                    new: true
+                }
+            );
+
+            await sendResetMail(result, doc.token,
+                (message) => {
+                    throw { message: message }
+                }
+                ,
+                () => {
+                    res.send("Success! If account exist with that email address you will receive an email with password reset insturuction.");
+                }
+            );
+        }
+
+
     } catch (error) {
+
         res.status(422).send(error.message);
     }
 
 }
+
+
+
+const sendResetMail = async (user, token, onError, onSuccess) => {
+    const mailer = nodeMailer.createTransport({
+        service: "gmail",
+        auth: {
+            user: "piyushoa2004@gmail.com",
+            pass: "yqcnhlzbfkghqdvb"
+        }
+    });
+
+    const mailBody = `
+        <!DOCTYPE html>
+        <html lang="en">
+
+        <head>
+            <meta charset="UTF-8" />
+            <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            <title>Querry from Customer</title>
+
+            <style>
+                @import url('https://fonts.googleapis.com/css2?family=Ubuntu&display=swap');
+
+                * {
+                    margin: 0;
+                    padding: 0;
+                    box-sizing: border-box;
+                    float: left;
+                    width: 100%;
+                    font-family: 'Ubuntu', sans-serif;
+                }
+
+                h1 {
+                    width: 100%;
+                    color: #2563eb;
+                    font-size: 40px;
+                    padding: 10px;
+                    border-bottom: 2px solid #e7e7e7;
+                }
+
+                p {
+                    width: 100%;
+                    font-weight: 400;
+                    padding: 20px 10px;
+                    font-size: 20px;
+                }
+
+                #header {
+                    font-size: 30px;
+                    padding: 20px 10px;
+                    display: flex;
+                    align-items: baseline;
+                }
+
+                a {
+                    margin: 10px;
+                    text-decoration: none;
+                    color: white;
+                    background: #2563eb;
+                    border-radius: 10px;
+                    padding: 16px 20px;
+                    font-size: 20px;
+                    width: fit-content;
+
+                }
+
+                #footer {
+                    margin-top: 25px;
+                    background: #457aed;
+                    font-size: 18px;
+                    color: white;
+                    text-align: center;
+                    padding: 50px 20px;
+                }
+
+                @media only screen and (max-width: 768px) {
+
+                    h1 {
+                        font-size: 30px;
+                    }
+
+                    p {
+                        font-weight: 400;
+                        font-size: 16px;
+                    }
+
+                    #header {
+                        font-size: 22px;
+                    }
+
+                    #footer {
+                        font-size: 16px;
+                        padding: 40px;
+                    }
+
+                }
+            </style>
+        </head>
+
+        <body>
+            <h1>ToDo</h1>
+            <p id="header"> Dear <span style="margin-left: 12px; color: #457aed;">{{name}}</span> </p>
+            <p>Please click on below button to reset your password.</p>
+            <br>
+            <a href="https://www.todo-4406.web.app/createpassword/{{token}}">Reset Password</a>
+
+            <p id="footer">
+                You have received this message because you have an account associated with this email address on
+                todo-4406.web.app
+            </p>
+        </body>
+
+        </html>
+	`;
+
+    const mailBodyTemplate = Handlebars.compile(mailBody);
+
+    const finalMailBody = mailBodyTemplate({
+        name: user.name,
+        token: token
+    });
+
+    const sendMailOptions = {
+        from: {
+            name: "ToDo",
+            address: "support@todo.com"
+        },
+        to: user.email,
+        subject: "Reset Password",
+        html: finalMailBody
+    };
+
+    try {
+        mailer.sendMail(
+            sendMailOptions,
+            (error, result) => {
+                console.log(result)
+                error ?
+                    (error.message) ? onError(error.message) :
+                        onError("Something went wrong while sending email")
+                    :
+                    onSuccess();
+
+            }
+        )
+    } catch (error) {
+        error.message ? onError(error.message) : onError("Something went wrong while sending email");
+    }
+};
 
 // 4. add note
 
@@ -92,10 +271,10 @@ export const addnote = async (req, res, next) => {
 
     try {
         if (noteid) {
-            result = await Notes.updateOne({_id: noteid}, {title: title, description: description})
+            result = await Notes.updateOne({ _id: noteid }, { title: title, description: description })
         }
         else {
-        result = await Notes.create({ userid: userid, title: title, description: description });
+            result = await Notes.create({ userid: userid, title: title, description: description });
         }
 
         res.send(result);
@@ -107,11 +286,11 @@ export const addnote = async (req, res, next) => {
 // 5. delete note 
 
 export const deletenote = async (req, res, next) => {
-    const {noteid} = req.body;
+    const { noteid } = req.body;
 
     let result;
     try {
-        result = await Notes.deleteOne({_id: noteid});
+        result = await Notes.deleteOne({ _id: noteid });
 
         res.send(result);
     } catch (error) {
@@ -137,11 +316,11 @@ export const profilepage = async (req, res, next) => {
 // 7. fetch notes 
 
 export const fetchnotes = async (req, res, next) => {
-    const {userid} = req.body;
+    const { userid } = req.body;
 
     let result;
     try {
-        result = await Notes.find({userid: userid});
+        result = await Notes.find({ userid: userid });
 
         res.send(result);
     } catch (error) {
