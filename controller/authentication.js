@@ -36,7 +36,7 @@ export const signup = async (req, res, next) => {
         res.send(result);
 
     } catch (error) {
-        res.status(422).send(error.message);
+        res.status(422).send(error);
     }
 }
 
@@ -58,7 +58,7 @@ export const login = async (req, res, next) => {
         }
         res.send(result);
     } catch (error) {
-        res.status(422).send(error.message);
+        res.status(422).send(error);
     }
 }
 
@@ -75,7 +75,6 @@ export const resetpassword = async (req, res, next) => {
         const result = await User.findOne({ email: email });
 
         const token = "kdjgnkjegbsdkjngskjd";
-        const expireTime = 300;
 
         if (result) {
 
@@ -123,108 +122,115 @@ const sendResetMail = async (user, token, onError, onSuccess) => {
     });
 
     const mailBody = `
-        <!DOCTYPE html>
-        <html lang="en">
-
-        <head>
-            <meta charset="UTF-8" />
-            <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-            <title>Querry from Customer</title>
-
-            <style>
-                @import url('https://fonts.googleapis.com/css2?family=Ubuntu&display=swap');
-
-                * {
-                    margin: 0;
-                    padding: 0;
-                    box-sizing: border-box;
-                    float: left;
-                    width: 100%;
-                    font-family: 'Ubuntu', sans-serif;
-                }
-
+    <!DOCTYPE html>
+    <html lang="en">
+    
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Querry from Customer</title>
+    
+        <style>
+            @import url('https://fonts.googleapis.com/css2?family=Ubuntu&display=swap');
+    
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+                float: left;
+                width: 100%;
+                font-family: 'Ubuntu', sans-serif;
+            }
+    
+            h1 {
+                width: 100%;
+                color: #2563eb;
+                font-size: 40px;
+                padding: 10px;
+                border-bottom: 2px solid #e7e7e7;
+            }
+    
+            p {
+                width: 100%;
+                font-weight: 400;
+                padding: 20px 10px;
+                font-size: 20px;
+            }
+    
+            #header {
+                font-size: 30px;
+                padding: 20px 10px;
+                display: flex;
+                align-items: baseline;
+            }
+    
+            div {
+                width: 100%;
+                align-items: center;
+                justify-content: center;
+            }
+    
+            #button {
+                margin: 10px;
+                text-decoration: none;
+                background-color: #2563eb;
+                color: white;
+                border-radius: 10px;
+                padding: 16px 20px;
+                font-size: 20px;
+                width: fit-content;
+    
+            }
+    
+            #footer {
+                margin: 25px 0 25px 0;
+                background: #bdd2ff;
+                font-size: 18px;
+                color: black;
+                text-align: center;
+                padding: 50px 20px;
+            }
+    
+            @media only screen and (max-width: 768px) {
+    
                 h1 {
-                    width: 100%;
-                    color: #2563eb;
-                    font-size: 40px;
-                    padding: 10px;
-                    border-bottom: 2px solid #e7e7e7;
-                }
-
-                p {
-                    width: 100%;
-                    font-weight: 400;
-                    padding: 20px 10px;
-                    font-size: 20px;
-                }
-
-                #header {
                     font-size: 30px;
-                    padding: 20px 10px;
-                    display: flex;
-                    align-items: baseline;
                 }
-
-                a {
-                    margin: 10px;
-                    text-decoration: none;
-                    color: white;
-                    background: #2563eb;
-                    border-radius: 10px;
-                    padding: 16px 20px;
-                    font-size: 20px;
-                    width: fit-content;
-
+    
+                p {
+                    font-weight: 400;
+                    font-size: 16px;
                 }
-
+    
+                #header {
+                    font-size: 22px;
+                }
+    
                 #footer {
-                    margin-top: 25px;
-                    background: #457aed;
-                    font-size: 18px;
-                    color: white;
-                    text-align: center;
-                    padding: 50px 20px;
+                    font-size: 12px;
+                    padding: 40px;
+                    margin-bottom: 100px;
                 }
-
-                @media only screen and (max-width: 768px) {
-
-                    h1 {
-                        font-size: 30px;
-                    }
-
-                    p {
-                        font-weight: 400;
-                        font-size: 16px;
-                    }
-
-                    #header {
-                        font-size: 22px;
-                    }
-
-                    #footer {
-                        font-size: 16px;
-                        padding: 40px;
-                    }
-
-                }
-            </style>
-        </head>
-
-        <body>
-            <h1>ToDo</h1>
-            <p id="header"> Dear <span style="margin-left: 12px; color: #457aed;">{{name}}</span> </p>
-            <p>Please click on below button to reset your password.</p>
-            <br>
-            <a href="https://www.todo-4406.web.app/createpassword/{{token}}">Reset Password</a>
-
-            <p id="footer">
-                You have received this message because you have an account associated with this email address on
-                todo-4406.web.app
-            </p>
-        </body>
-
-        </html>
+    
+            }
+        </style>
+    </head>
+    
+    <body>
+        <h1>ToDo</h1>
+        <p id="header"> Dear <span style="margin-left: 12px; color: #457aed;">{{name}}</span> </p>
+        <p>Please click on the below button to reset your password.</p>
+        <br>
+        <div>
+            <a id="button" href="https://www.todo-4406.web.app/createpassword/{{token}}">Reset Password</a>
+        </div>
+        <p id="footer">
+            You have received this message because you have an account associated with this email address on todo-4406.web.app
+        </p>
+    </body>
+    
+    </html>
 	`;
 
     const mailBodyTemplate = Handlebars.compile(mailBody);

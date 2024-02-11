@@ -20,4 +20,4 @@ express.use(json());
 
 express.use(auth);
 
-express.listen(PORT, () => {});
+express.listen(PORT, () => {console.log("running server")});
