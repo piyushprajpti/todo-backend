@@ -319,14 +319,29 @@ export const profilepage = async (req, res, next) => {
     }
 }
 
-// 7. fetch notes 
+// 7. fetch all notes 
 
-export const fetchnotes = async (req, res, next) => {
+export const fetchallnotes = async (req, res, next) => {
     const { userid } = req.body;
 
     let result;
     try {
         result = await Notes.find({ userid: userid });
+
+        res.send(result);
+    } catch (error) {
+        res.status(400).send(error)
+    }
+}
+
+// 8. fetch single note 
+
+export const fetchanote = async (req, res, next) => {
+    const { noteid } = req.body;
+
+    let result;
+    try {
+        result = await Notes.findById(noteid);
 
         res.send(result);
     } catch (error) {
