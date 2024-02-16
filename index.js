@@ -17,7 +17,9 @@ mongoose.connect("mongodb+srv://piyushoa2004:oA7lIkVdhBDu4Tr0@main.bcfx7zx.mongo
 
 express.use(cors());
 express.use(json());
-
+express.get("/", (a, b) => {
+    b.send("Good");
+})
 express.use(auth);
 
 express.listen(PORT, () => {console.log("running server")});

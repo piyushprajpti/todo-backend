@@ -1,8 +1,8 @@
 import User from "../schema/User.js";
 import Notes from "../schema/Notes.js";
-import Token from "../schema/Token.js";
 import nodeMailer from "nodemailer";
 import Handlebars from "handlebars";
+import Otp from "../schema/Otp.js";
 
 // 1. signup
 
@@ -74,16 +74,16 @@ export const resetpassword = async (req, res, next) => {
 
         const result = await User.findOne({ email: email });
 
-        const token = "kdjgnkjegbsdkjngskjd";
 
         if (result) {
+            const otp = Math.floor(100000 + Math.random() * 900000)
 
-            const doc = await Token.findOneAndUpdate(
+            let doc = await Otp.findOneAndUpdate(
                 {
                     email: result.email
                 },
                 {
-                    token: token
+                    otp: otp
                 },
                 {
                     upsert: true,
@@ -91,28 +91,27 @@ export const resetpassword = async (req, res, next) => {
                 }
             );
 
-            await sendResetMail(result, doc.token,
+            await sendResetMail(result, otp,
                 (message) => {
                     throw { message: message }
                 }
                 ,
                 () => {
-                    res.send("Success! If account exist with that email address you will receive an email with password reset insturuction.");
+                    res.send("Success! OTP sent to registered email address.");
                 }
             );
         }
+        res.send("Success! OTP sent to registered email address.")
 
 
     } catch (error) {
 
-        res.status(422).send(error.message);
+        res.status(422).send(error);
     }
 
 }
 
-
-
-const sendResetMail = async (user, token, onError, onSuccess) => {
+const sendResetMail = async (user, otp, onError, onSuccess) => {
     const mailer = nodeMailer.createTransport({
         service: "gmail",
         auth: {
@@ -143,10 +142,10 @@ const sendResetMail = async (user, token, onError, onSuccess) => {
                 font-family: 'Ubuntu', sans-serif;
             }
     
-            h1 {
+            #title {
                 width: 100%;
                 color: #2563eb;
-                font-size: 40px;
+                font-size: 28px;
                 padding: 10px;
                 border-bottom: 2px solid #e7e7e7;
             }
@@ -154,7 +153,7 @@ const sendResetMail = async (user, token, onError, onSuccess) => {
             p {
                 width: 100%;
                 font-weight: 400;
-                padding: 20px 10px;
+                padding: 8px;
                 font-size: 20px;
             }
     
@@ -171,16 +170,15 @@ const sendResetMail = async (user, token, onError, onSuccess) => {
                 justify-content: center;
             }
     
-            #button {
+            #otp {
                 margin: 10px;
                 text-decoration: none;
-                background-color: #2563eb;
-                color: white;
-                border-radius: 10px;
+                font-weight: 700;
+                color: #2563eb;
                 padding: 16px 20px;
-                font-size: 20px;
+                font-size: 36px;
                 width: fit-content;
-    
+                letter-spacing: 1.2px;
             }
     
             #footer {
@@ -218,15 +216,15 @@ const sendResetMail = async (user, token, onError, onSuccess) => {
     </head>
     
     <body>
-        <h1>ToDo</h1>
+        <p id="title">ToDo - Quick Notes</p>
         <p id="header"> Dear <span style="margin-left: 12px; color: #457aed;">{{name}}</span> </p>
-        <p>Please click on the below button to reset your password.</p>
+        <p>Here is your OTP to reset your account password.</p>
         <br>
         <div>
-            <a id="button" href="https://www.todo-4406.web.app/createpassword/{{token}}">Reset Password</a>
+            <p id="otp">{{otp}}</p>
         </div>
         <p id="footer">
-            You have received this message because you have an account associated with this email address on todo-4406.web.app
+            You have received this message because you have an account associated with this email address on ToDo - Quick Notes website or android app
         </p>
     </body>
     
@@ -237,12 +235,12 @@ const sendResetMail = async (user, token, onError, onSuccess) => {
 
     const finalMailBody = mailBodyTemplate({
         name: user.name,
-        token: token
+        otp: otp
     });
 
     const sendMailOptions = {
         from: {
-            name: "ToDo",
+            name: "ToDo - Quick Notes",
             address: "support@todo.com"
         },
         to: user.email,
@@ -254,21 +252,63 @@ const sendResetMail = async (user, token, onError, onSuccess) => {
         mailer.sendMail(
             sendMailOptions,
             (error, result) => {
-                console.log(result)
                 error ?
-                    (error.message) ? onError(error.message) :
-                        onError("Something went wrong while sending email")
+                    (error.message) ? onError(error) :
+                        onError({ "message": "Something went wrong while sending email" })
                     :
                     onSuccess();
 
             }
         )
     } catch (error) {
-        error.message ? onError(error.message) : onError("Something went wrong while sending email");
+        error.message ? onError(error) : onError({ "message": "Something went wrong while sending email" });
     }
 };
 
-// 4. add note
+// 4. fetch otp
+
+export const fetchotp = async (req, res, next) => {
+    const { email, otp } = req.body;
+
+    let result;
+
+    try {
+        result = await Otp.findOne({ email: email, otp: otp })
+
+        if (result === null) {
+            throw { message: "Invalid OTP, Please try again" }
+        } else {
+            res.send("OTP verification successfull")
+        }
+    } catch (error) {
+        res.status(422).send(error)
+    }
+}
+
+//5. update password
+
+export const updatepassword = async (req, res, next) => {
+    const { email, password, confirmPassword } = req.body;
+
+    let result;
+
+    try {
+        if (password.trim() === "" || confirmPassword.trim() === "") {
+            throw{ message: "Fields can't be empty" }
+        }
+        if (password !== confirmPassword) {
+            throw { message: "Password mismatch" }
+        }
+
+        result = await User.updateOne({ email: email }, { password: password });
+
+        res.send("Password updated successfully. Login to continue")
+    } catch (error) {
+        res.status(422).send(error);
+    }
+}
+
+// 6. add note
 
 export const addnote = async (req, res, next) => {
     const { userid, noteid, title, description } = req.body;
@@ -289,7 +329,7 @@ export const addnote = async (req, res, next) => {
     }
 }
 
-// 5. delete note 
+// 7. delete note 
 
 export const deletenote = async (req, res, next) => {
     const { noteid } = req.body;
@@ -304,7 +344,7 @@ export const deletenote = async (req, res, next) => {
     }
 }
 
-// 6. profile page
+// 8. profile page
 
 export const profilepage = async (req, res, next) => {
     const { userid } = req.body;
@@ -319,7 +359,7 @@ export const profilepage = async (req, res, next) => {
     }
 }
 
-// 7. fetch all notes 
+// 9. fetch all notes 
 
 export const fetchallnotes = async (req, res, next) => {
     const { userid } = req.body;
@@ -334,7 +374,7 @@ export const fetchallnotes = async (req, res, next) => {
     }
 }
 
-// 8. fetch single note 
+// 10. fetch single note 
 
 export const fetchanote = async (req, res, next) => {
     const { noteid } = req.body;
