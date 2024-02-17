@@ -97,11 +97,11 @@ export const resetpassword = async (req, res, next) => {
                 }
                 ,
                 () => {
-                    res.send("Success! OTP sent to registered email address.");
+                    res.send({"response": "Success! OTP sent to registered email address."});
                 }
             );
         }
-        res.send("Success! OTP sent to registered email address.")
+        res.send({"response": "Success! OTP sent to registered email address."});
 
 
     } catch (error) {
@@ -178,7 +178,7 @@ const sendResetMail = async (user, otp, onError, onSuccess) => {
                 padding: 16px 20px;
                 font-size: 36px;
                 width: fit-content;
-                letter-spacing: 1.2px;
+                letter-spacing: 1.3px;
             }
     
             #footer {
@@ -224,7 +224,7 @@ const sendResetMail = async (user, otp, onError, onSuccess) => {
             <p id="otp">{{otp}}</p>
         </div>
         <p id="footer">
-            You have received this message because you have an account associated with this email address on ToDo - Quick Notes website or android app
+            You have received this email because you have an account associated with this email address on ToDo - Quick Notes website or android app
         </p>
     </body>
     
@@ -278,7 +278,7 @@ export const fetchotp = async (req, res, next) => {
         if (result === null) {
             throw { message: "Invalid OTP, Please try again" }
         } else {
-            res.send("OTP verification successfull")
+            res.send({"response":"OTP verification successfull"})
         }
     } catch (error) {
         res.status(422).send(error)
@@ -302,7 +302,7 @@ export const updatepassword = async (req, res, next) => {
 
         result = await User.updateOne({ email: email }, { password: password });
 
-        res.send("Password updated successfully. Login to continue")
+        res.send({"response":"Password updated successfully. Login to continue"})
     } catch (error) {
         res.status(422).send(error);
     }
